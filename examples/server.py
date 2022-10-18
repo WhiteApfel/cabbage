@@ -16,14 +16,14 @@ async def handler(request: str) -> str:
     return hex(n)
 
 
-async def main(rpc):
+async def main(rpc: AsyncAmqpRpc):
     await rpc.connect()
     await rpc.subscribe(handler, 'my_queue')
     await rpc.run_server()
 
 
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     connection = AmqpConnection()
     rpc = AsyncAmqpRpc(connection)
     try:
