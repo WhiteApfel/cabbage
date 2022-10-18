@@ -22,7 +22,15 @@ class FakeAsyncAmqpRpc(AsyncAmqpRpc):
     def set_response(self, routing_key, data):
         self.responses[routing_key] = data
 
-    async def send_rpc(self, destination, data, exchange='', await_response=True, timeout=None, correlation_id=None):
+    async def send_rpc(
+        self,
+        destination,
+        data,
+        exchange="",
+        await_response=True,
+        timeout=None,
+        correlation_id=None,
+    ):
         self.call_args.append((destination, data))
         if not await_response:
             return
@@ -43,7 +51,7 @@ class FakeAsyncAmqpRpc(AsyncAmqpRpc):
 
     async def fake_message(self, queue, data):
         if queue not in self.subscriptions:
-            raise ValueError(f'invalid queue name {queue}')
+            raise ValueError(f"invalid queue name {queue}")
 
         request_handler = self.subscriptions[queue]
         response = request_handler(data)

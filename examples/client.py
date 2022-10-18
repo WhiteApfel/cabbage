@@ -6,8 +6,7 @@ import random
 from cabbage import AmqpConnection, AsyncAmqpRpc
 
 logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+    level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
 
 
@@ -16,12 +15,12 @@ async def main(rpc):
 
     while True:
         n = random.randint(1, 100)
-        hex_n = await rpc.send_rpc('my_queue', str(n))
-        logging.info('request: {}, response: {}'.format(n, hex_n))
+        hex_n = await rpc.send_rpc("my_queue", str(n))
+        logging.info("request: {}, response: {}".format(n, hex_n))
         await asyncio.sleep(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     connection = AmqpConnection()
     rpc = AsyncAmqpRpc(connection)

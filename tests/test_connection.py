@@ -15,21 +15,28 @@ from tests.conftest import MockProtocol, MockTransport
 pytestmark = pytest.mark.asyncio
 
 # Sample non-default connection info:
-HOST = 'fake_amqp_host'
+HOST = "fake_amqp_host"
 PORT = 25762
-USERNAME = 'amqp_user'
-PASSWORD = 'secret_password'
-VIRTUALHOST = 'test_vhost'
+USERNAME = "amqp_user"
+PASSWORD = "secret_password"
+VIRTUALHOST = "test_vhost"
 
 
 @pytest.mark.asyncio
 async def test_amqp_connection_ssl(event_loop):
     ssl_context = mock.MagicMock()
     mock_transport, mock_protocol = MockTransport(), MockProtocol()
-    with patch('asyncio.base_events.BaseEventLoop.create_connection') as mock_connect:
+    with patch("asyncio.base_events.BaseEventLoop.create_connection") as mock_connect:
         mock_connect.return_value = (mock_transport, mock_protocol)
-        await aioamqp_connect(host=HOST, port=PORT, virtualhost=VIRTUALHOST, login=USERNAME, password=PASSWORD,
-                              loop=event_loop, ssl=ssl_context)
+        await aioamqp_connect(
+            host=HOST,
+            port=PORT,
+            virtualhost=VIRTUALHOST,
+            login=USERNAME,
+            password=PASSWORD,
+            loop=event_loop,
+            ssl=ssl_context,
+        )
         mock_connect.assert_called_once_with(mock.ANY, HOST, PORT, ssl=ssl_context)
 
 
@@ -37,22 +44,38 @@ async def test_amqp_connection_ssl(event_loop):
 async def test_amqp_connection_exception(event_loop):
     ssl_context = mock.MagicMock()
     mock_transport, mock_protocol = MockTransport(), MockProtocol()
-    mock_protocol.start_connection = mock.MagicMock(side_effect=ValueError('TestException'))
-    with patch('asyncio.base_events.BaseEventLoop.create_connection') as mock_connect:
+    mock_protocol.start_connection = mock.MagicMock(
+        side_effect=ValueError("TestException")
+    )
+    with patch("asyncio.base_events.BaseEventLoop.create_connection") as mock_connect:
         mock_connect.return_value = (mock_transport, mock_protocol)
-        with pytest.raises(ValueError, match='TestException'):
-            await aioamqp_connect(host=HOST, port=PORT, virtualhost=VIRTUALHOST, login=USERNAME, password=PASSWORD,
-                                  loop=event_loop, ssl=ssl_context)
+        with pytest.raises(ValueError, match="TestException"):
+            await aioamqp_connect(
+                host=HOST,
+                port=PORT,
+                virtualhost=VIRTUALHOST,
+                login=USERNAME,
+                password=PASSWORD,
+                loop=event_loop,
+                ssl=ssl_context,
+            )
 
 
 @pytest.mark.asyncio
 async def test_amqp_connection_ssl_context(event_loop):
     mock_transport, mock_protocol = MockTransport(), MockProtocol()
-    with patch('asyncio.base_events.BaseEventLoop.create_connection') as mock_connect:
-        with patch('ssl.create_default_context') as mock_default_context:
+    with patch("asyncio.base_events.BaseEventLoop.create_connection") as mock_connect:
+        with patch("ssl.create_default_context") as mock_default_context:
             mock_connect.return_value = (mock_transport, mock_protocol)
-            await aioamqp_connect(host=HOST, port=PORT, virtualhost=VIRTUALHOST, login=USERNAME, password=PASSWORD,
-                                  verify_ssl=False, ssl=mock_default_context)
+            await aioamqp_connect(
+                host=HOST,
+                port=PORT,
+                virtualhost=VIRTUALHOST,
+                login=USERNAME,
+                password=PASSWORD,
+                verify_ssl=False,
+                ssl=mock_default_context,
+            )
             assert mock_default_context.check_hostname is False
             assert mock_default_context.verify_mode == ssl.CERT_NONE
 
@@ -61,10 +84,16 @@ async def test_amqp_connection_ssl_context(event_loop):
 async def test_amqp_connection_with_ssl_port(event_loop):
     SSL_PORT = 5671
     mock_transport, mock_protocol = MockTransport(), MockProtocol()
-    with patch('asyncio.base_events.BaseEventLoop.create_connection') as mock_connect:
+    with patch("asyncio.base_events.BaseEventLoop.create_connection") as mock_connect:
         mock_connect.return_value = (mock_transport, mock_protocol)
-        await aioamqp_connect(host=HOST, virtualhost=VIRTUALHOST, login=USERNAME, password=PASSWORD, loop=event_loop,
-                              ssl=True)
+        await aioamqp_connect(
+            host=HOST,
+            virtualhost=VIRTUALHOST,
+            login=USERNAME,
+            password=PASSWORD,
+            loop=event_loop,
+            ssl=True,
+        )
         mock_connect.assert_called_once_with(mock.ANY, HOST, SSL_PORT, ssl=mock.ANY)
 
 
@@ -72,10 +101,16 @@ async def test_amqp_connection_with_ssl_port(event_loop):
 async def test_amqp_connection_with_default_port(event_loop):
     DEFAULT_PORT = 5672
     mock_transport, mock_protocol = MockTransport(), MockProtocol()
-    with patch('asyncio.base_events.BaseEventLoop.create_connection') as mock_connect:
+    with patch("asyncio.base_events.BaseEventLoop.create_connection") as mock_connect:
         mock_connect.return_value = (mock_transport, mock_protocol)
-        await aioamqp_connect(host=HOST, virtualhost=VIRTUALHOST, login=USERNAME, password=PASSWORD, loop=event_loop,
-                              ssl=False)
+        await aioamqp_connect(
+            host=HOST,
+            virtualhost=VIRTUALHOST,
+            login=USERNAME,
+            password=PASSWORD,
+            loop=event_loop,
+            ssl=False,
+        )
         mock_connect.assert_called_once_with(mock.ANY, HOST, DEFAULT_PORT)
 
 
@@ -85,14 +120,26 @@ class TestConnect:
     async def test_connect(self, event_loop):
         """Check typical connection call."""
         mock_transport, mock_protocol = MockTransport(), MockProtocol()
-        connection = cabbage.AmqpConnection(hosts=[(HOST, PORT)], username=USERNAME, password=PASSWORD,
-                                            virtualhost=VIRTUALHOST, loop=event_loop)
-        with patch('cabbage.amqp.aioamqp_connect') as mock_connect:
+        connection = cabbage.AmqpConnection(
+            hosts=[(HOST, PORT)],
+            username=USERNAME,
+            password=PASSWORD,
+            virtualhost=VIRTUALHOST,
+            loop=event_loop,
+        )
+        with patch("cabbage.amqp.aioamqp_connect") as mock_connect:
             mock_connect.return_value = (mock_transport, mock_protocol)
             await connection.connect()
 
-        mock_connect.assert_called_once_with(host=HOST, port=PORT, login=USERNAME, password=PASSWORD,
-                                             virtualhost=VIRTUALHOST, loop=event_loop, ssl=False)
+        mock_connect.assert_called_once_with(
+            host=HOST,
+            port=PORT,
+            login=USERNAME,
+            password=PASSWORD,
+            virtualhost=VIRTUALHOST,
+            loop=event_loop,
+            ssl=False,
+        )
         assert connection.transport is mock_transport
         assert connection.protocol is mock_protocol
 
@@ -100,12 +147,19 @@ class TestConnect:
         """Check that AmqpConnection supplies reasonable defaults."""
         connection = cabbage.AmqpConnection(loop=event_loop)
         mock_transport, mock_protocol = MockTransport(), MockProtocol()
-        with patch('cabbage.amqp.aioamqp_connect') as mock_connect:
+        with patch("cabbage.amqp.aioamqp_connect") as mock_connect:
             mock_connect.return_value = (mock_transport, mock_protocol)
             await connection.connect()
 
-        mock_connect.assert_called_once_with(host='localhost', port=5672, login='guest', password='guest',
-                                             virtualhost='/', loop=event_loop, ssl=False)
+        mock_connect.assert_called_once_with(
+            host="localhost",
+            port=5672,
+            login="guest",
+            password="guest",
+            virtualhost="/",
+            loop=event_loop,
+            ssl=False,
+        )
         assert connection.transport is mock_transport
         assert connection.protocol is mock_protocol
 
@@ -115,7 +169,7 @@ class TestConnect:
         mock_transport, mock_protocol = MockTransport(), MockProtocol()
         connection.transport = mock_transport
         connection.protocol = mock_protocol
-        with patch('cabbage.amqp.aioamqp_connect') as mock_connect:
+        with patch("cabbage.amqp.aioamqp_connect") as mock_connect:
             await connection.connect()
 
         mock_connect.assert_not_called()
@@ -127,18 +181,32 @@ class TestConnect:
         attempts = 10
 
         async def faulty_connect(_attempts=[attempts], **kwargs):
-            assert kwargs == dict(host=HOST, port=PORT, login=USERNAME, password=PASSWORD, virtualhost=VIRTUALHOST,
-                                  loop=event_loop, ssl=False)
+            assert kwargs == dict(
+                host=HOST,
+                port=PORT,
+                login=USERNAME,
+                password=PASSWORD,
+                virtualhost=VIRTUALHOST,
+                loop=event_loop,
+                ssl=False,
+            )
             _attempts[0] -= 1
             if _attempts[0]:
-                raise OSError('[Errno 113] Connect call failed')
+                raise OSError("[Errno 113] Connect call failed")
             return mock_transport, mock_protocol
 
-        connection = cabbage.AmqpConnection(hosts=[(HOST, PORT)], username=USERNAME,
-                                            password=PASSWORD, virtualhost=VIRTUALHOST, loop=event_loop)
+        connection = cabbage.AmqpConnection(
+            hosts=[(HOST, PORT)],
+            username=USERNAME,
+            password=PASSWORD,
+            virtualhost=VIRTUALHOST,
+            loop=event_loop,
+        )
         mock_transport, mock_protocol = MockTransport(), MockProtocol()
 
-        with patch('cabbage.amqp.aioamqp_connect', new=faulty_connect), patch('asyncio.sleep') as mock_sleep:
+        with patch("cabbage.amqp.aioamqp_connect", new=faulty_connect), patch(
+            "asyncio.sleep"
+        ) as mock_sleep:
             await connection.connect()
 
         assert mock_sleep.call_count == attempts - 1
@@ -147,11 +215,15 @@ class TestConnect:
 
     async def test_fatal_error(self, event_loop):
         """Some connection errors are not worth trying to recover from."""
-        connection = cabbage.AmqpConnection(hosts=[('angrydev.ru', 80)], loop=event_loop)
+        connection = cabbage.AmqpConnection(
+            hosts=[("angrydev.ru", 80)], loop=event_loop
+        )
 
         with pytest.raises(asyncio.IncompleteReadError):
-            with patch('cabbage.amqp.aioamqp_connect',
-                       side_effect=asyncio.IncompleteReadError([], 160)) as mock_connect:
+            with patch(
+                "cabbage.amqp.aioamqp_connect",
+                side_effect=asyncio.IncompleteReadError([], 160),
+            ) as mock_connect:
                 await connection.connect()
 
         mock_connect.assert_called_once()
@@ -181,8 +253,10 @@ class TestIsConnectedProperty:
         connection.protocol = None
         assert connection.is_connected is False
 
-    @pytest.mark.parametrize('state', [CONNECTING, CLOSING, CLOSED])
-    async def test_protocol_state_not_equals_open(self, connection: AmqpConnection, state):
+    @pytest.mark.parametrize("state", [CONNECTING, CLOSING, CLOSED])
+    async def test_protocol_state_not_equals_open(
+        self, connection: AmqpConnection, state
+    ):
         connection.protocol.state = state
         assert connection.is_connected is False
 
