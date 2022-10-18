@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import logging
 
 import pytest
@@ -19,9 +20,10 @@ def connection(event_loop):
 
 
 @pytest.fixture
-async def rpc(connection):
+def rpc(connection):
     _rpc = cabbage.AsyncAmqpRpc(connection=connection)
-    await _rpc.connect()
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(_rpc.connect())
     return _rpc
 
 

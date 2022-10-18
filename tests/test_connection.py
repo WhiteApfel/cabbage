@@ -40,7 +40,7 @@ async def test_amqp_connection_exception(event_loop):
     mock_protocol.start_connection = mock.MagicMock(side_effect=ValueError('TestException'))
     with patch('asyncio.base_events.BaseEventLoop.create_connection') as mock_connect:
         mock_connect.return_value = (mock_transport, mock_protocol)
-        with pytest.raises(ValueError, message='Expected ValueError'):
+        with pytest.raises(ValueError, match='TestException'):
             await aioamqp_connect(host=HOST, port=PORT, virtualhost=VIRTUALHOST, login=USERNAME, password=PASSWORD,
                                   loop=event_loop, ssl=ssl_context)
 
@@ -149,9 +149,9 @@ class TestConnect:
         """Some connection errors are not worth trying to recover from."""
         connection = cabbage.AmqpConnection(hosts=[('angrydev.ru', 80)], loop=event_loop)
 
-        with pytest.raises(asyncio.streams.IncompleteReadError):
+        with pytest.raises(asyncio.IncompleteReadError):
             with patch('cabbage.amqp.aioamqp_connect',
-                       side_effect=asyncio.streams.IncompleteReadError([], 160)) as mock_connect:
+                       side_effect=asyncio.IncompleteReadError([], 160)) as mock_connect:
                 await connection.connect()
 
         mock_connect.assert_called_once()
