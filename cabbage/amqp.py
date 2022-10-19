@@ -6,9 +6,20 @@ import random
 import socket
 import ssl as ssl_module
 import uuid
+from asyncio import AbstractEventLoop
 from functools import partial
 from itertools import cycle
-from typing import Optional, Callable, Union, Awaitable, Mapping, Dict
+from typing import (
+    Optional,
+    Callable,
+    Union,
+    Awaitable,
+    Mapping,
+    Dict,
+    Iterable,
+    Literal,
+    Type,
+)
 
 from aioamqp.channel import Channel
 from aioamqp.envelope import Envelope
@@ -27,12 +38,12 @@ class ServiceUnavailableError(Exception):
 class AmqpConnection:
     def __init__(
         self,
-        hosts=None,
-        username="guest",
-        password="guest",
-        virtualhost="/",
-        loop=None,
-        ssl=False,
+        hosts: Iterable[tuple[str, Union[str, int]]] = None,
+        username: Optional[str] = "guest",
+        password: Optional[str] = "guest",
+        virtualhost: Optional[str] = "/",
+        loop: Optional[AbstractEventLoop] = None,
+        ssl: Optional[Union[bool, ssl_module.SSLContext]] = False,
     ):
         """
         :param hosts: iterable with tuples (host, port), default localhost:5672
@@ -52,7 +63,7 @@ class AmqpConnection:
         self.protocol = None
         self.ssl = ssl
 
-    async def channel(self):
+    async def channel(self) -> Channel:
         if self.protocol is not None:
             return await self.protocol.channel()
 
@@ -103,7 +114,7 @@ class AmqpConnection:
             await self.protocol.close()
 
     @property
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """Property, required for rpc to check readiness"""
         return bool(self.protocol) and self.protocol.state == OPEN
 
@@ -237,6 +248,7 @@ class AsyncAmqpRpc:
         queue: str,
         exchange: str = "",
         routing_key: str = None,
+        resubscribe: bool = False,
     ) -> str:
         """
         Subscribe to a specific queue. Exchange and queue will be created if they do not exist.
@@ -247,10 +259,15 @@ class AsyncAmqpRpc:
         :param exchange: exchange name, default '' (default AMQP exchange)
         :param queue: queue name
         :param routing_key: routing key, default same as `queue`
+        :param resubscribe: resubscribe on reconnect
         :return: consumer_tag
         """
         if routing_key is None:
             routing_key = queue
+        if resubscribe:
+            self.start_subscriptions.append(
+                (request_handler, queue, exchange, routing_key)
+            )
         await self.declare(
             queue=queue,
             exchange=exchange,
@@ -460,19 +477,21 @@ class AsyncAmqpRpc:
 
 
 async def aioamqp_connect(
-    host="localhost",
-    port=None,
-    login="guest",
-    password="guest",
-    virtualhost="/",
-    ssl=False,
-    login_method="AMQPLAIN",
-    insist=False,
-    protocol_factory=AmqpProtocol,
+    host: str = "localhost",
+    port: int = None,
+    login: Optional[str] = "guest",
+    password: Optional[str] = "guest",
+    virtualhost: Optional[str] = "/",
+    ssl: Optional[Union[bool, ssl_module.SSLContext]] = False,
+    login_method: Literal[
+        "PLAIN", "AMQPLAIN", "RABBIT-CR-DEMO", "EXTERNAL"
+    ] = "AMQPLAIN",
+    insist: Optional[bool] = False,
+    protocol_factory: Type[AmqpProtocol] = AmqpProtocol,
     *,
-    verify_ssl=True,
-    loop=None,
-    timeout=None,
+    verify_ssl: Optional[bool] = True,
+    loop: Optional[AbstractEventLoop] = None,
+    timeout: Optional[Union[int, float]] = None,
     **kwargs,
 ):
     """Convenient method to connect to an AMQP broker
@@ -488,6 +507,7 @@ async def aioamqp_connect(
     :param insist:        Insist on connecting to a server
     :param protocol_factory: Factory to use, if you need to subclass AmqpProtocol
     :param loop:          Set the event loop to use
+    :param timeout:       Connection close timeout after exception
     :param kwargs:        Arguments to be given to the protocol_factory instance
     :return:              a tuple (transport, protocol) of an AmqpProtocol instance
     """

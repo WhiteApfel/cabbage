@@ -80,13 +80,17 @@ class TestSubscribe:
         await rpc.connect()
         assert rpc.channel.queue_declare.call_count == 1
         assert rpc.channel.basic_consume.call_count == 1
+        assert len(rpc.start_subscriptions) == 0
 
         await rpc.subscribe(
             exchange=TEST_EXCHANGE,
             queue=SUBSCRIPTION_QUEUE,
             routing_key=SUBSCRIPTION_KEY,
             request_handler=request_handler,
+            resubscribe=True,
         )
+
+        assert len(rpc.start_subscriptions) == 1
         assert rpc.channel.queue_declare.call_count == 2
         assert rpc.channel.basic_consume.call_count == 2
         rpc.channel.basic_qos.assert_called_once_with(

@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+1.1.0 (2022-10-19)
+------------------
+- Update tests
+- Up requirements
+- Make code black
+
 1.0.0 (2019-06-04)
 ------------------
 
